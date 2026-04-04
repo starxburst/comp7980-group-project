@@ -1,0 +1,25 @@
+{
+  "name": "petstagram",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "server"
+  ],
+  "scripts": {
+    "dev:server":  "npm run dev -w @petstagram/server",
+    "dev:web":     "npm run dev -w @petstagram/web",
+    "dev:mobile":  "npm run dev -w @petstagram/mobile",
+    "dev":         "concurrently \"npm run dev:server\" \"npm run dev:web\"",
+    "infra:up":    "docker compose --env-file .env -f docker/docker-compose.yml up -d mongodb minio",
+    "infra:down":  "docker compose --env-file .env -f docker/docker-compose.yml down",
+    "compose:up":  "docker compose --env-file .env -f docker/docker-compose.yml up --build",
+    "compose:down":"docker compose --env-file .env -f docker/docker-compose.yml down",
+    "fetch-images": "node seed/fetchImages.js",
+    "seed":        "node seed/seed.js",
+    "install:all": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

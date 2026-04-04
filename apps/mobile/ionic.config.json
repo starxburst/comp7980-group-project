@@ -1,0 +1,7 @@
+{
+  "name": "petstagram-mobile",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
