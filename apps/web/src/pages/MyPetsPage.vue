@@ -119,20 +119,29 @@
             <div class="mb-3">
               <label class="form-label">Photos</label>
               <input
-                ref="photoInput"
+                :id="photoInputId"
                 type="file"
-                class="d-none"
+                class="pet-photo-picker__input"
                 multiple
                 accept="image/*"
                 @change="onPhotos"
               />
               <div class="pet-photo-picker">
-                <button class="btn btn-outline-primary btn-sm" type="button" @click="openPhotoPicker">
+                <label class="btn btn-outline-primary btn-sm mb-0" :for="photoInputId">
                   Choose Files
-                </button>
+                </label>
                 <span class="pet-photo-picker__text">
                   {{ photoSelectionLabel }}
                 </span>
+              </div>
+              <div v-if="photoPreviews.length" class="pet-photo-previews mt-3">
+                <img
+                  v-for="preview in photoPreviews"
+                  :key="preview"
+                  :src="preview"
+                  class="pet-photo-previews__image"
+                  alt="Selected pet photo preview"
+                />
               </div>
               <div class="d-flex align-items-center gap-2 mt-2">
                 <button class="btn btn-outline-primary btn-sm"
@@ -220,7 +229,8 @@ const editingPetId = ref('')
 const saving       = ref(false)
 const form         = ref(defaultForm())
 const photoFiles   = ref([])
-const photoInput   = ref(null)
+const photoPreviews = ref([])
+const photoInputId = 'pet-photo-input'
 const aiFieldEffect = ref({ species: false, breed: false })
 const {
   detecting: breedDetecting,
@@ -245,11 +255,10 @@ const adoptForm      = ref({ adoptionStatus: 'none', adoptionContactEmail: '' })
 onMounted(() => petsStore.fetchMyPets())
 
 function onPhotos(e) {
+  revokePhotoPreviews()
   photoFiles.value = Array.from(e.target.files || [])
+  photoPreviews.value = photoFiles.value.map(file => URL.createObjectURL(file))
   clearDetection()
-}
-function openPhotoPicker() {
-  photoInput.value?.click()
 }
 function goHealth(id) { router.push(`/my-pets/${id}/health`) }
 
@@ -276,7 +285,7 @@ function triggerAiFieldEffect() {
 function openAddModal() {
   editingPetId.value = ''
   form.value = defaultForm()
-  photoFiles.value = []
+  clearPhotoFiles()
   resetAiFieldEffect()
   clearDetection()
   showEditor.value = true
@@ -296,7 +305,7 @@ function openEditModal(pet) {
     description: pet.description || '',
     aiBreedRaw:  pet.aiBreedRaw || '',
   }
-  photoFiles.value = []
+  clearPhotoFiles()
   resetAiFieldEffect()
   clearDetection()
   showEditor.value = true
@@ -315,9 +324,23 @@ function closeModal() {
   showEditor.value = false
   editingPetId.value = ''
   form.value = defaultForm()
-  photoFiles.value = []
+  clearPhotoFiles()
   resetAiFieldEffect()
   clearDetection()
+}
+
+function clearPhotoFiles() {
+  revokePhotoPreviews()
+  photoFiles.value = []
+  photoPreviews.value = []
+  const input = document.getElementById(photoInputId)
+  if (input) input.value = ''
+}
+
+function revokePhotoPreviews() {
+  photoPreviews.value.forEach(previewUrl => {
+    URL.revokeObjectURL(previewUrl)
+  })
 }
 
 async function runBreedDetection() {
@@ -362,6 +385,18 @@ async function saveAdoption() {
 </script>
 
 <style scoped>
+.pet-photo-picker__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .pet-photo-picker {
   display: flex;
   align-items: center;
@@ -382,6 +417,21 @@ async function saveAdoption() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.pet-photo-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 0.75rem;
+}
+
+.pet-photo-previews__image {
+  width: 100%;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid var(--ps-border);
+  background: var(--ps-surface-strong);
 }
 </style>
 
