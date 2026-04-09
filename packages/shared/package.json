@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "src/index.js",
   "dependencies": {
+    "@tensorflow-models/mobilenet": "^2.1.1",
+    "@tensorflow/tfjs": "^4.20.0",
     "axios": "^1.7.0",
     "pinia": "^2.2.0",
-    "vue": "^3.5.0",
-    "@tensorflow/tfjs": "^4.20.0",
-    "@tensorflow-models/mobilenet": "^2.1.1"
+    "vue": "^3.5.0"
   }
 }

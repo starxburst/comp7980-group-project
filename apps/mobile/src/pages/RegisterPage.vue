@@ -58,6 +58,10 @@ const loading = ref(false)
 
 async function submit() {
   error.value   = ''
+  if (!form.value.name.trim() || !form.value.email.trim() || !form.value.password.trim()) {
+    error.value = 'Name, email, and password are required'
+    return
+  }
   loading.value = true
   try {
     const { data } = await authService.register(form.value)

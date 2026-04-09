@@ -44,10 +44,11 @@ const router = useRouter()
 
 const navItems = computed(() => [
   { to: '/feed',            icon: 'bi-house',          label: 'Home'         },
+  { to: '/explore',         icon: 'bi-search',         label: 'Explore'      },
   { to: '/post/create',     icon: 'bi-plus-circle',    label: 'New Post'     },
   { to: '/adopt/browse',    icon: 'bi-heart',          label: 'Adopt'        },
   { to: '/events',          icon: 'bi-calendar-event', label: 'Events'       },
-  { to: '/my-pets',         icon: 'bi-paw',            label: 'My Pets'      },
+  { to: '/my-pets',         icon: 'bi-emoji-smile',    label: 'My Pets'      },
   { to: '/my-applications', icon: 'bi-file-earmark-text', label: 'My Applications' },
   { to: '/profile',         icon: 'bi-person-circle',  label: 'Profile'      },
 ])

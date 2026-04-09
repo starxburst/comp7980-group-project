@@ -4,11 +4,8 @@
       <ion-toolbar color="primary">
         <ion-title slot="start">Adopt</ion-title>
         <ion-buttons slot="end">
-          <ion-button aria-label="Events" @click="router.push('/tabs/events')">
-            <ion-icon :icon="calendarOutline" />
-          </ion-button>
-          <ion-button aria-label="Log out" @click="doLogout">
-            <ion-icon :icon="logOutOutline" />
+          <ion-button color="light" aria-label="Events" @click="router.push('/tabs/events')">
+            <ion-icon slot="icon-only" :icon="calendarOutline" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -74,14 +71,12 @@ import {
   IonSearchbar, IonList, IonItem, IonAvatar, IonLabel,
   IonBadge, IonSpinner, IonChip, IonIcon,
 } from '@ionic/vue'
-import { heartCircle, calendarOutline, logOutOutline } from 'ionicons/icons'
+import { heartCircle, calendarOutline } from 'ionicons/icons'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@shared/stores/auth.js'
 import { adoptService } from '@shared/services/adoptService.js'
 import { fileUrl } from '@shared/utils/formatters.js'
 
 const router       = useRouter()
-const auth         = useAuthStore()
 const pets         = ref([])
 const search       = ref('')
 const loading      = ref(false)
@@ -117,10 +112,6 @@ async function load() {
 
 onMounted(load)
 
-async function doLogout() {
-  await auth.logout()
-  router.replace('/login')
-}
 </script>
 
 <style scoped>

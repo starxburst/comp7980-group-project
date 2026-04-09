@@ -4,11 +4,8 @@
       <ion-toolbar color="primary">
         <ion-title slot="start">Events</ion-title>
         <ion-buttons slot="end">
-          <ion-button v-if="auth.isStaff || auth.isAdmin" aria-label="New event" @click="showCreate = true">
-            <ion-icon :icon="addCircle" slot="start" />
-          </ion-button>
-          <ion-button aria-label="Log out" @click="doLogout">
-            <ion-icon :icon="logOutOutline" slot="start" />
+          <ion-button v-if="auth.isStaff || auth.isAdmin" color="light" aria-label="New event" @click="showCreate = true">
+            <ion-icon slot="icon-only" :icon="addCircle" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -92,7 +89,7 @@ import {
   IonCardContent, IonBadge, IonModal, IonList, IonItem, IonInput, IonSelect,
   IonSelectOption, IonTextarea,
 } from '@ionic/vue'
-import { addCircle, logOutOutline } from 'ionicons/icons'
+import { addCircle } from 'ionicons/icons'
 import { useAuthStore } from '@shared/stores/auth.js'
 import { eventService } from '@shared/services/eventService.js'
 import { EVENT_TYPES } from '@shared/utils/constants.js'
@@ -136,8 +133,4 @@ async function createEvent() {
   }
 }
 
-async function doLogout() {
-  await auth.logout()
-  router.replace('/login')
-}
 </script>

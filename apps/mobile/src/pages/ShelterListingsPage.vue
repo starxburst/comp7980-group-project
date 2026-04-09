@@ -7,8 +7,8 @@
         </ion-buttons>
         <ion-title slot="start">Shelter Listings</ion-title>
         <ion-buttons slot="end">
-          <ion-button aria-label="Applications" @click="router.push('/shelter/applications')">
-            <ion-icon :icon="documentTextOutline" />
+          <ion-button color="light" aria-label="Applications" @click="router.push('/shelter/applications')">
+            <ion-icon slot="icon-only" :icon="documentTextOutline" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>

@@ -11,7 +11,7 @@ const routes = [
     meta:      { requiresAuth: true },
     children: [
       { path: 'feed',    component: () => import('../pages/FeedPage.vue')        },
-      { path: 'explore', redirect: '/tabs/feed' },
+      { path: 'explore', component: () => import('../pages/ExplorePage.vue')     },
       { path: 'create',  component: () => import('../pages/CreatePostPage.vue')  },
       { path: 'adopt',   component: () => import('../pages/AdoptBrowsePage.vue') },
       { path: 'events',  component: () => import('../pages/EventsPage.vue')      },

@@ -1,8 +1,8 @@
 <template>
   <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
       <h4 class="fw-bold mb-0">My Pets</h4>
-      <button class="btn btn-primary btn-sm" @click="openAddModal">
+      <button class="btn btn-primary btn-sm align-self-stretch align-self-sm-auto" @click="openAddModal">
         <i class="bi bi-plus-lg me-1"></i>Add Pet
       </button>
     </div>
@@ -64,13 +64,24 @@
             <div class="row g-2 mb-3">
               <div class="col">
                 <label class="form-label">Species</label>
-                <select v-model="form.species" class="form-select">
+                <select v-model="form.species"
+                        class="form-select"
+                        :class="{ 'ai-filled-field': aiFieldEffect.species }">
                   <option v-for="s in SPECIES" :key="s" :value="s">{{ s }}</option>
                 </select>
               </div>
               <div class="col">
                 <label class="form-label">Breed</label>
-                <input v-model="form.breed" class="form-control" />
+                <input v-model="form.breed"
+                       class="form-control"
+                       :class="{ 'ai-filled-field': aiFieldEffect.breed }" />
+                <div v-if="aiFillNotice" class="ai-fill-notice mt-2">
+                  AI filled species and breed from the selected photo.
+                </div>
+                <div v-if="breedDetectionResult" class="form-text">
+                  Suggested locally with MobileNet: {{ breedDetectionResult.breed }}
+                  ({{ breedDetectionResult.confidence }}% confidence)
+                </div>
               </div>
             </div>
             <div class="row g-2 mb-3">
@@ -107,7 +118,38 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Photos</label>
-              <input type="file" class="form-control" multiple accept="image/*" @change="onPhotos" />
+              <input
+                ref="photoInput"
+                type="file"
+                class="d-none"
+                multiple
+                accept="image/*"
+                @change="onPhotos"
+              />
+              <div class="pet-photo-picker">
+                <button class="btn btn-outline-primary btn-sm" type="button" @click="openPhotoPicker">
+                  Choose Files
+                </button>
+                <span class="pet-photo-picker__text">
+                  {{ photoSelectionLabel }}
+                </span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mt-2">
+                <button class="btn btn-outline-primary btn-sm"
+                        type="button"
+                        @click="runBreedDetection"
+                        :disabled="breedDetecting">
+                  <span v-if="breedDetecting" class="spinner-border spinner-border-sm me-1"></span>
+                  Use AI to Fill Breed
+                </button>
+                <span class="text-muted small">Runs fully in your browser using the pretrained MobileNet model.</span>
+              </div>
+              <div v-if="!canRunBreedDetection" class="form-text">
+                Select a photo first to run breed detection.
+              </div>
+              <div v-if="breedDetectionError" class="text-danger small mt-2">
+                {{ breedDetectionError }}
+              </div>
               <div v-if="editingPetId" class="form-text">Leave empty to keep current photos.</div>
             </div>
           </div>
@@ -160,11 +202,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted }  from 'vue'
+import { computed, ref, onMounted }  from 'vue'
 import { useRouter }       from 'vue-router'
 import { usePetsStore }    from '@shared/stores/pets.js'
 import { useAuthStore }    from '@shared/stores/auth.js'
 import { petService }      from '@shared/services/petService.js'
+import { useBreedDetect }  from '@shared/composables/useBreedDetect.js'
 import { SPECIES }         from '@shared/utils/constants.js'
 import PetCard             from '../components/PetCard.vue'
 
@@ -176,7 +219,23 @@ const showEditor   = ref(false)
 const editingPetId = ref('')
 const saving       = ref(false)
 const form         = ref(defaultForm())
-let photoFiles     = []
+const photoFiles   = ref([])
+const photoInput   = ref(null)
+const aiFieldEffect = ref({ species: false, breed: false })
+const {
+  detecting: breedDetecting,
+  error: breedDetectionError,
+  result: breedDetectionResult,
+  detectFromFile,
+  clearDetection,
+} = useBreedDetect()
+const canRunBreedDetection = computed(() => photoFiles.value.length > 0)
+const aiFillNotice = computed(() => aiFieldEffect.value.species || aiFieldEffect.value.breed)
+const photoSelectionLabel = computed(() => {
+  if (!photoFiles.value.length) return 'No file chosen'
+  if (photoFiles.value.length === 1) return photoFiles.value[0].name
+  return `${photoFiles.value.length} files selected`
+})
 
 const showAdoption   = ref(false)
 const adoptingPet    = ref(null)
@@ -185,7 +244,13 @@ const adoptForm      = ref({ adoptionStatus: 'none', adoptionContactEmail: '' })
 
 onMounted(() => petsStore.fetchMyPets())
 
-function onPhotos(e) { photoFiles = Array.from(e.target.files) }
+function onPhotos(e) {
+  photoFiles.value = Array.from(e.target.files || [])
+  clearDetection()
+}
+function openPhotoPicker() {
+  photoInput.value?.click()
+}
 function goHealth(id) { router.push(`/my-pets/${id}/health`) }
 
 function adoptBadgeClass(s) {
@@ -194,13 +259,26 @@ function adoptBadgeClass(s) {
 
 function defaultForm() {
   return { name: '', species: 'Dog', breed: '', color: '', sex: 'unknown',
-           dob: '', weight: '', personality: '', description: '' }
+           dob: '', weight: '', personality: '', description: '', aiBreedRaw: '' }
+}
+
+function resetAiFieldEffect() {
+  aiFieldEffect.value = { species: false, breed: false }
+}
+
+function triggerAiFieldEffect() {
+  aiFieldEffect.value = { species: true, breed: true }
+  window.setTimeout(() => {
+    resetAiFieldEffect()
+  }, 2200)
 }
 
 function openAddModal() {
   editingPetId.value = ''
   form.value = defaultForm()
-  photoFiles = []
+  photoFiles.value = []
+  resetAiFieldEffect()
+  clearDetection()
   showEditor.value = true
 }
 
@@ -216,8 +294,11 @@ function openEditModal(pet) {
     weight:      pet.weight ?? '',
     personality: Array.isArray(pet.personality) ? pet.personality.join(', ') : (pet.personality || ''),
     description: pet.description || '',
+    aiBreedRaw:  pet.aiBreedRaw || '',
   }
-  photoFiles = []
+  photoFiles.value = []
+  resetAiFieldEffect()
+  clearDetection()
   showEditor.value = true
 }
 
@@ -234,7 +315,23 @@ function closeModal() {
   showEditor.value = false
   editingPetId.value = ''
   form.value = defaultForm()
-  photoFiles = []
+  photoFiles.value = []
+  resetAiFieldEffect()
+  clearDetection()
+}
+
+async function runBreedDetection() {
+  if (!canRunBreedDetection.value) {
+    breedDetectionError.value = 'Please select a photo before running breed detection.'
+    return
+  }
+
+  const result = await detectFromFile(photoFiles.value[0])
+  if (!result) return
+  form.value.breed = result.breed
+  if (result.type && result.type !== 'Unknown') form.value.species = result.type
+  form.value.aiBreedRaw = JSON.stringify(result)
+  triggerAiFieldEffect()
 }
 
 async function savePet() {
@@ -244,7 +341,7 @@ async function savePet() {
     if (v === '' || v === null || v === undefined) return
     fd.append(k, typeof v === 'boolean' ? String(v) : v)
   })
-  photoFiles.forEach(f => fd.append('photos', f))
+  photoFiles.value.forEach(f => fd.append('photos', f))
   try {
     if (editingPetId.value) await petsStore.updatePet(editingPetId.value, fd)
     else await petsStore.createPet(fd)
@@ -263,3 +360,79 @@ async function saveAdoption() {
   } finally { savingAdoption.value = false }
 }
 </script>
+
+<style scoped>
+.pet-photo-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 56px;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--ps-border);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+    var(--ps-surface);
+}
+
+.pet-photo-picker__text {
+  min-width: 0;
+  color: var(--ps-text);
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>
+
+<style scoped>
+.ai-filled-field {
+  border-color: #4cc38a;
+  box-shadow: 0 0 0 0.18rem rgba(76, 195, 138, 0.16);
+  animation: aiFieldPulse 0.9s ease-in-out 2;
+}
+
+.ai-fill-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(76, 195, 138, 0.1);
+  border: 1px solid rgba(76, 195, 138, 0.18);
+  color: #72d4a0;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.ai-fill-notice::before {
+  content: 'AI';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: rgba(76, 195, 138, 0.22);
+  color: #dff7ea;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+}
+
+@keyframes aiFieldPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(76, 195, 138, 0.26);
+  }
+
+  50% {
+    transform: scale(1.005);
+    box-shadow: 0 0 0 0.28rem rgba(76, 195, 138, 0.1);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0.18rem rgba(76, 195, 138, 0.16);
+  }
+}
+</style>

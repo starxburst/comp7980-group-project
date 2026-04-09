@@ -1,5 +1,5 @@
 import * as mobilenet from '@tensorflow-models/mobilenet'
-import '@tensorflow/tfjs'
+import * as tf from '@tensorflow/tfjs'
 
 const BREED_TYPE_MAP = {
   'chow':       'Dog', 'samoyed': 'Dog', 'husky':    'Dog', 'elkhound':  'Dog',
@@ -14,10 +14,51 @@ const BREED_TYPE_MAP = {
 }
 
 let cachedModel = null
+let cachedModelPromise = null
+
+const MODEL_LOAD_TIMEOUT_MS = 20000
+
+function withTimeout(promise, ms, message) {
+  let timeoutId
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error(message)), ms)
+  })
+
+  return Promise.race([
+    promise.finally(() => window.clearTimeout(timeoutId)),
+    timeoutPromise,
+  ])
+}
+
+async function getModel() {
+  if (cachedModel) return cachedModel
+
+  if (!cachedModelPromise) {
+    cachedModelPromise = (async () => {
+      await tf.ready()
+      const model = await withTimeout(
+        mobilenet.load({ version: 2, alpha: 1.0 }),
+        MODEL_LOAD_TIMEOUT_MS,
+        'Breed model took too long to load. The current MobileNet setup is likely waiting on a blocked model download.'
+      )
+      cachedModel = model
+      return model
+    })().catch(error => {
+      cachedModelPromise = null
+      throw error
+    })
+  }
+
+  return cachedModelPromise
+}
 
 export async function detectBreed(imgElement) {
-  if (!cachedModel) cachedModel = await mobilenet.load({ version: 2, alpha: 1.0 })
-  const predictions = await cachedModel.classify(imgElement, 3)
+  if (typeof window === 'undefined') {
+    throw new Error('Breed detection only runs in the browser')
+  }
+
+  const model = await getModel()
+  const predictions = await model.classify(imgElement, 3)
   let detectedType = ''
   for (const pred of predictions) {
     const lower = pred.className.toLowerCase()

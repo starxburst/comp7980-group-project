@@ -1,6 +1,43 @@
 const User = require('../models/User')
 const { uploadFile } = require('../utils/uploadToMinio')
 
+exports.searchUsers = async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim()
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1)
+    const limit = Math.min(30, Math.max(1, Number.parseInt(req.query.limit, 10) || 12))
+
+    const filter = q
+      ? {
+          $or: [
+            { name: { $regex: q, $options: 'i' } },
+            { email: { $regex: q, $options: 'i' } },
+            { bio: { $regex: q, $options: 'i' } },
+          ],
+        }
+      : {}
+
+    const [items, total] = await Promise.all([
+      User.find(filter)
+        .select('-passwordHash')
+        .sort({ followersCount: -1, name: 1, createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+      User.countDocuments(filter),
+    ])
+
+    res.json({
+      items,
+      total,
+      page,
+      limit,
+      hasMore: page * limit < total,
+    })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-passwordHash')

@@ -4,11 +4,8 @@
       <ion-toolbar color="primary">
         <ion-title slot="start">Petstagram</ion-title>
         <ion-buttons slot="end">
-          <ion-button aria-label="Events" @click="router.push('/tabs/events')">
-            <ion-icon :icon="calendarOutline" />
-          </ion-button>
-          <ion-button aria-label="Log out" @click="doLogout">
-            <ion-icon :icon="logOutOutline" />
+          <ion-button color="light" aria-label="Events" @click="router.push('/tabs/events')">
+            <ion-icon slot="icon-only" :icon="calendarOutline" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -80,13 +77,11 @@ import {
   IonBadge, IonSpinner, IonRefresher, IonRefresherContent, IonLabel, IonItem,
   IonInfiniteScroll, IonInfiniteScrollContent,
 } from '@ionic/vue'
-import { heart, cameraOutline, chatbubbleOutline, openOutline, calendarOutline, logOutOutline } from 'ionicons/icons'
-import { useAuthStore } from '@shared/stores/auth.js'
+import { heart, cameraOutline, chatbubbleOutline, openOutline, calendarOutline } from 'ionicons/icons'
 import { useFeedStore } from '@shared/stores/feed.js'
 import { fileUrl, onImageError, timeAgo } from '@shared/utils/formatters.js'
 
 const router = useRouter()
-const auth = useAuthStore()
 const feedStore = useFeedStore()
 onMounted(() => feedStore.fetchFeed({ reset: true }))
 
@@ -108,8 +103,4 @@ async function toggleLike(post) {
   await feedStore.likePost(post._id)
 }
 
-async function doLogout() {
-  await auth.logout()
-  router.replace('/login')
-}
 </script>

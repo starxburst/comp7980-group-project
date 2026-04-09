@@ -3,14 +3,6 @@
     <h4 class="fw-bold mb-4">Create Post</h4>
     <form @submit.prevent="submit">
       <div class="mb-3">
-        <label class="form-label">Type</label>
-        <div class="d-flex gap-2">
-          <button type="button" v-for="t in ['pawpost','story']" :key="t"
-                  class="btn btn-sm" :class="form.type === t ? 'btn-primary' : 'btn-outline-secondary'"
-                  @click="form.type = t">{{ t }}</button>
-        </div>
-      </div>
-      <div class="mb-3">
         <label class="form-label">Pet (optional)</label>
         <select v-model="form.petId" class="form-select">
           <option value="">— No pet tag —</option>
@@ -25,10 +17,6 @@
       <div class="mb-3">
         <label class="form-label">Caption</label>
         <textarea v-model="form.caption" class="form-control" rows="3" placeholder="Write a caption…"></textarea>
-      </div>
-      <div class="mb-3 form-check">
-        <input v-model="form.adoptionBadge" type="checkbox" class="form-check-input" id="adoptBadge" />
-        <label class="form-check-label" for="adoptBadge">Tag as adoptable</label>
       </div>
       <div v-if="error" class="alert alert-danger py-2 small">{{ error }}</div>
       <button type="submit" class="btn btn-primary w-100" :disabled="loading">
@@ -47,7 +35,7 @@ import { postService }    from '@shared/services/postService.js'
 
 const router    = useRouter()
 const petsStore = usePetsStore()
-const form      = ref({ type: 'pawpost', petId: '', caption: '', adoptionBadge: false })
+const form      = ref({ petId: '', caption: '' })
 const error     = ref('')
 const loading   = ref(false)
 const preview   = ref('')

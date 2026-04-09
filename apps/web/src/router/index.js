@@ -5,7 +5,6 @@ const routes = [
   // Public
   { path: '/login',    component: () => import('../pages/LoginPage.vue') },
   { path: '/register', component: () => import('../pages/RegisterPage.vue') },
-  { path: '/explore',  redirect: '/feed' },
   { path: '/pets/:id', component: () => import('../pages/PetDetailPage.vue') },
 
   // Auth required (owner+)
@@ -16,13 +15,14 @@ const routes = [
     children: [
       { path: '',       redirect: '/feed' },
       { path: 'feed',   component: () => import('../pages/FeedPage.vue') },
+      { path: 'explore', component: () => import('../pages/ExplorePage.vue') },
       { path: 'posts/:id', component: () => import('../pages/PostDetailPage.vue') },
       { path: 'profile',      component: () => import('../pages/ProfilePage.vue') },
       { path: 'profile/:id', component: () => import('../pages/ProfilePage.vue') },
       { path: 'my-pets',component: () => import('../pages/MyPetsPage.vue') },
       { path: 'my-pets/:id/health', component: () => import('../pages/HealthPage.vue') },
       { path: 'post/create',        component: () => import('../pages/CreatePostPage.vue') },
-      { path: 'story/create',       component: () => import('../pages/CreateStoryPage.vue') },
+      { path: 'story/create',       redirect: '/post/create' },
       { path: 'adopt/browse',       component: () => import('../pages/AdoptBrowsePage.vue') },
       { path: 'adopt/:id',          component: () => import('../pages/AdoptDetailPage.vue') },
       { path: 'my-applications',    component: () => import('../pages/MyApplicationsPage.vue') },

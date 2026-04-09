@@ -6,11 +6,6 @@
           <ion-back-button default-href="/tabs/feed" />
         </ion-buttons>
         <ion-title slot="start">New Post</ion-title>
-        <ion-buttons slot="end">
-          <ion-button aria-label="Log out" @click="doLogout">
-            <ion-icon :icon="logOutOutline" slot="start" />
-          </ion-button>
-        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
@@ -50,17 +45,14 @@ import { ref, onMounted } from 'vue'
 import { useRouter }      from 'vue-router'
 import {
   IonPage, IonHeader, IonToolbar, IonTitle, IonContent,
-  IonButtons,
   IonItem, IonLabel, IonSelect, IonSelectOption, IonTextarea,
   IonBackButton, IonButton, IonIcon, IonSpinner, IonText,
 } from '@ionic/vue'
-import { camera, logOutOutline } from 'ionicons/icons'
-import { useAuthStore } from '@shared/stores/auth.js'
+import { camera } from 'ionicons/icons'
 import { usePetsStore } from '@shared/stores/pets.js'
 import { postService }  from '@shared/services/postService.js'
 
 const router    = useRouter()
-const auth      = useAuthStore()
 const petsStore = usePetsStore()
 const form      = ref({ petId: '', caption: '', type: 'pawpost' })
 const error     = ref('')
@@ -99,8 +91,4 @@ async function submit() {
   }
 }
 
-async function doLogout() {
-  await auth.logout()
-  router.replace('/login')
-}
 </script>

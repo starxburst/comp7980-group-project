@@ -2,32 +2,12 @@ const mongoose = require('mongoose')
 const Post     = require('../models/Post')
 const Follow   = require('../models/Follow')
 const Comment  = require('../models/Comment')
+const MyPet    = require('../models/MyPet')
 const { uploadFile } = require('../utils/uploadToMinio')
 
 function parsePositiveInt(value, fallback) {
   const parsed = Number.parseInt(value, 10)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
-}
-
-async function analyzeSentiment(text) {
-  try {
-    const res = await fetch(
-      'https://api-inference.huggingface.co/models/distilbert-base-uncased-finetuned-sst-2-english',
-      {
-        method:  'POST',
-        headers: {
-          Authorization:  `Bearer ${process.env.HF_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ inputs: text }),
-      }
-    )
-    const data = await res.json()
-    const top  = data[0].sort((a, b) => b.score - a.score)[0]
-    return { label: top.label.toLowerCase(), score: top.score }
-  } catch {
-    return { label: 'neutral', score: 0.5 }
-  }
 }
 
 function toObjectId(id) {
@@ -144,20 +124,27 @@ exports.explore = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { petId, type, caption, adoptionBadge, adoptionPetId } = req.body
+    const { petId, caption, type } = req.body
     if (!req.file) return res.status(400).json({ message: 'Media file required' })
-    const mediaUrl = await uploadFile(req.file.buffer, req.file.originalname, 'posts')
-    const sentiment = caption ? await analyzeSentiment(caption) : { label: 'neutral', score: 0.5 }
-    const postData = {
-      authorId: req.user.id, petId, type: type || 'pawpost',
-      mediaUrl, caption,
-      sentimentLabel: sentiment.label, sentimentScore: sentiment.score,
-      likedBy: [],
-      adoptionBadge: adoptionBadge === 'true',
-      adoptionPetId: adoptionPetId || undefined,
+
+    let linkedPet = null
+    if (petId) {
+      linkedPet = await MyPet.findOne({ _id: petId, ownerId: req.user.id })
+      if (!linkedPet) return res.status(403).json({ message: 'You can only post your own pets' })
     }
-    if (type === 'story') {
-      postData.expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
+
+    const mediaUrl = await uploadFile(req.file.buffer, req.file.originalname, 'posts')
+    const canAutoTagAdoptable = ['shelter_staff', 'admin'].includes(req.user.role)
+      && linkedPet?.adoptionStatus === 'available'
+
+    const postData = {
+      authorId: req.user.id,
+      petId: linkedPet?._id,
+      type: type === 'story' ? 'story' : 'pawpost',
+      mediaUrl, caption,
+      likedBy: [],
+      adoptionBadge: Boolean(canAutoTagAdoptable),
+      adoptionPetId: canAutoTagAdoptable ? linkedPet._id : undefined,
     }
     postData.likeCount = 0
     const post = await Post.create(postData)
